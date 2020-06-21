@@ -4,10 +4,10 @@ import scipy
 
 def load_data(batch_size=64):
 
-    art= pd.read_csv('/home/dipesh/data/office_home_csv/Art_Art.csv')
-    clipart= pd.read_csv('/home/dipesh/data/office_home_csv/Clipart_Clipart.csv')
-    product= pd.read_csv('/home/dipesh/data/office_home_csv/Product_Product.csv')
-    real_world= pd.read_csv('/home/dipesh/data/office_home_csv/RealWorld_RealWorld.csv')
+    art= pd.read_csv('../csv_data/Art_Art.csv')
+    clipart= pd.read_csv('../csv_data/Clipart_Clipart.csv')
+    product= pd.read_csv('../csv_data/Product_Product.csv')
+    real_world= pd.read_csv('../csv_data/RealWorld_RealWorld.csv')
 
 
     # print("art.shape",art.shape)
