@@ -3,12 +3,12 @@ import pandas as pd
 import torch.utils.data as data_utils
 import scipy
 
-def load_data(batch_size=64):
+def load_data_csv(folder_path,batch_size=64):
 
-    art= pd.read_csv('../csv_data/Art_Art.csv')
-    clipart= pd.read_csv('../csv_data/Clipart_Clipart.csv')
-    product= pd.read_csv('../csv_data/Product_Product.csv')
-    real_world= pd.read_csv('../csv_data/RealWorld_RealWorld.csv')
+    art= pd.read_csv(folder_path + '/Art_Art.csv')
+    clipart= pd.read_csv(folder_path + '/Clipart_Clipart.csv')
+    product= pd.read_csv(folder_path + '/Product_Product.csv')
+    real_world= pd.read_csv(folder_path + '/RealWorld_RealWorld.csv')
 
 
     print("art.shape",art.shape)
