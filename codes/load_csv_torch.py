@@ -10,10 +10,10 @@ def load_data(batch_size=64):
     real_world= pd.read_csv('../csv_data/RealWorld_RealWorld.csv')
 
 
-    # print("art.shape",art.shape)
-    # print("clipart.shape",clipart.shape)
-    # print("product.shape",product.shape)
-    # print("real_world.shape",real_world.shape)
+    print("art.shape",art.shape)
+    print("clipart.shape",clipart.shape)
+    print("product.shape",product.shape)
+    print("real_world.shape",real_world.shape)
 
     art = torch.tensor(art.values)
     clipart = torch.tensor(clipart.values)
