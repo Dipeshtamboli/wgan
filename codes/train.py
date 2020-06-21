@@ -32,7 +32,7 @@ from timeit import default_timer as timer
 # ImageNet (64x64) at http://image-net.org/small/download.php
 
 @click.command()
-@click.option('--train_dir', default=None, help='Data path for training')
+@click.option('--train_dir', default="None", help='Data path for training')
 @click.option('--validation_dir', default=None, help='Data path for valication')
 @click.option('--image_data_type', default="image_folder", type=click.Choice(["lsun", "image_folder"]), help='If you are using lsun images from lsun lmdb, use lsun. If you use your own data in a folder, then use "image_folder". If you use lmdb, you\'ll need to write the loader by yourself. Please check load_data function')
 @click.option('--output_path', default=None, help='Output path where result (.e.g drawing images, cost, chart) will be stored')
