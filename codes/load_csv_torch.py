@@ -71,3 +71,5 @@ def load_data(batch_size=64):
     target_loader = data_utils.DataLoader(test, batch_size=batch_size, shuffle=False)
     return source_1_loader, source_2_loader, source_3_loader, target_loader, dict_name
 
+if __name__ == '__main__':
+    loaders = load_data()
