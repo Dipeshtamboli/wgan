@@ -15,6 +15,7 @@ from torchvision import transforms
 
 
 from models.wgan import *
+from load_csv_torch import load_data_csv
 from training_utils import *
 import libs as lib
 import libs.plot
@@ -40,7 +41,7 @@ from timeit import default_timer as timer
 @click.option('--lr', default=1e-4, help='Learning rate')
 @click.option('--critic_iters', default=5, help='How many iterations to train the critic/disciminator for')
 @click.option('--gen_iters', default=1, help='How many iterations to train the gemerator for')
-@click.option('--batch_size', default=64, help='Training batch size. Must be a multiple of number of gpus')
+@click.option('--batch_size', default=16, help='Training batch size. Must be a multiple of number of gpus')
 @click.option('--noisy_label_prob', default=0., help='Make the labels the noisy for the discriminator: occasionally flip the labels when training the discriminator')
 @click.option('--start_iter', default=0, help='Starting iteration')
 @click.option('--end_iter', default=100000, help='Ending iteration')
@@ -54,27 +55,27 @@ from timeit import default_timer as timer
 
 def train(train_dir, validation_dir, image_data_type, output_path, dim, lr, critic_iters, gen_iters, batch_size, noisy_label_prob, start_iter, end_iter, gp_lambda, num_workers, saving_step, training_class, val_class, restore_mode):
 
-    if train_dir is None or len(train_dir) == 0:
-        raise Exception('Please specify path to data directory in gan.py!')
+    # if train_dir is None or len(train_dir) == 0:
+    #     raise Exception('Please specify path to data directory in gan.py!')
 
 
-    output_path = Path(output_path)
-    sample_path = output_path / "samples"
-    mkdir_path(sample_path)
-    if isinstance(training_class, str):
-        training_class = training_class.split(",")
-    if isinstance(val_class, str):
-        val_class = val_class.split(",")
+    # output_path = Path(output_path)
+    # sample_path = output_path / "samples"
+    # mkdir_path(sample_path)
+    # if isinstance(training_class, str):
+    #     training_class = training_class.split(",")
+    # if isinstance(val_class, str):
+    #     val_class = val_class.split(",")
 
-    data_transform = transforms.Compose([
-        transforms.Resize(dim),
-        transforms.RandomCrop(dim),
-        # transforms.Lambda(lambda x : x + torch.normal(0, 0.1, (3, dim, dim))),
-        transforms.ToTensor(),
-        # transforms.Lambda(lambda x : x + torch.randn_like(x)),
-        # transforms.Lambda(lambda x : x + torch.normal(0, 0.1, (3, dim, dim))),
-        transforms.Normalize(mean=[0.5, 0.5, 0.5],std=[0.5, 0.5, 0.5])
-    ])
+    # data_transform = transforms.Compose([
+    #     transforms.Resize(dim),
+    #     transforms.RandomCrop(dim),
+    #     # transforms.Lambda(lambda x : x + torch.normal(0, 0.1, (3, dim, dim))),
+    #     transforms.ToTensor(),
+    #     # transforms.Lambda(lambda x : x + torch.randn_like(x)),
+    #     # transforms.Lambda(lambda x : x + torch.normal(0, 0.1, (3, dim, dim))),
+    #     transforms.Normalize(mean=[0.5, 0.5, 0.5],std=[0.5, 0.5, 0.5])
+    # ])
 
     cuda_available = torch.cuda.is_available()
     device = torch.device("cuda" if cuda_available else "cpu")
@@ -108,7 +109,7 @@ def train(train_dir, validation_dir, image_data_type, output_path, dim, lr, crit
 
     writer = SummaryWriter()
     #Reference: https://github.com/caogang/wgan-gp/blob/master/gan_cifar10.py
-    dataloader = load_data(image_data_type, train_dir, data_transform, batch_size=batch_size, classes=training_class, num_workers=num_workers)
+    dataloader = load_data_csv(image_data_type, train_dir, data_transform, batch_size=batch_size, classes=training_class, num_workers=num_workers)
     dataiter = iter(dataloader)
     for iteration in range(start_iter, end_iter):
         start_time = time.time()
