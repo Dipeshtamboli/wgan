@@ -191,12 +191,12 @@ class GoodDiscriminator(nn.Module):
         return output
 
 class CSVGenerator(nn.Module):
-    def __init__(self, dim=64, output_dim=3*64*64):
+    def __init__(self):
         super(CSVGenerator, self).__init__()
 
-        self.dim = dim
+        # self.dim = dim
 
-        self.ssize = self.dim // 16
+        # self.ssize = self.dim // 16
         self.ln1 = nn.Linear(128, 1024)
         self.ln2 = nn.Linear(1024, 2048)
         # self.rb1 = ResidualBlock(8*self.dim, 8*self.dim, 3, resample = 'up')
@@ -230,10 +230,10 @@ class CSVGenerator(nn.Module):
         return output
 
 class CSVDiscriminator(nn.Module):
-    def __init__(self, dim=64):
+    def __init__(self):
         super(CSVDiscriminator, self).__init__()
 
-        self.dim = dim
+        # self.dim = dim
 
         self.ln0 = nn.Linear(2048, 1024)
         self.ln1 = nn.Linear(1024, 1)
@@ -264,7 +264,7 @@ class CSVDiscriminator(nn.Module):
         return output
 if __name__ == '__main__':
     dim = 64
-    aG = CSVGenerator(dim, dim*dim*3)
+    aG = CSVGenerator()
     batch_size = 2
     noise = torch.randn(batch_size, 128)
     G_out = aG(noise)
@@ -272,7 +272,7 @@ if __name__ == '__main__':
     print(f"G_out shape: {G_out.shape}")
     noise2 = torch.randn(batch_size,3,64,64)
     # pdb.set_trace()
-    aD = CSVDiscriminator(dim)
+    aD = CSVDiscriminator()
     D_out = aD(G_out)
     print(f"D_out shape: {D_out.shape}")
     # pdb.set_trace()

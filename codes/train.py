@@ -92,8 +92,8 @@ def train(train_dir, validation_dir, image_data_type, output_path, dim, lr, crit
         d_state_dict = torch.load(str(output_path / "discriminator.pt"))
         aD.load_state_dict(remove_module_str_in_state_dict(d_state_dict))
     else:
-        aG = GoodGenerator(dim, dim*dim*3)
-        aD = GoodDiscriminator(dim)
+        aG = CSVGenerator()
+        aD = CSVDiscriminator()
         aG.apply(weights_init)
         aD.apply(weights_init)
 
