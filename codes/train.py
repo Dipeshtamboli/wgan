@@ -1,3 +1,4 @@
+import pdb
 import os, sys
 sys.path.append(os.getcwd())
 import click
@@ -33,7 +34,7 @@ from timeit import default_timer as timer
 # ImageNet (64x64) at http://image-net.org/small/download.php
 
 @click.command()
-@click.option('--train_dir', default="None", help='Data path for training')
+@click.option('--train_dir', default=None, help='Data path for training')
 @click.option('--validation_dir', default=None, help='Data path for valication')
 @click.option('--image_data_type', default="image_folder", type=click.Choice(["lsun", "image_folder"]), help='If you are using lsun images from lsun lmdb, use lsun. If you use your own data in a folder, then use "image_folder". If you use lmdb, you\'ll need to write the loader by yourself. Please check load_data function')
 @click.option('--output_path', default=None, help='Output path where result (.e.g drawing images, cost, chart) will be stored')
@@ -109,7 +110,10 @@ def train(train_dir, validation_dir, image_data_type, output_path, dim, lr, crit
 
     writer = SummaryWriter()
     #Reference: https://github.com/caogang/wgan-gp/blob/master/gan_cifar10.py
-    dataloader = load_data_csv(image_data_type, train_dir, data_transform, batch_size=batch_size, classes=training_class, num_workers=num_workers)
+    # dataloader = load_data_csv("../csv_data", train_dir, data_transform, batch_size=batch_size, classes=training_class, num_workers=num_workers)
+    dataloader = load_data_csv("../csv_data", batch_size=batch_size)
+    dataloader = dataloader[0]
+    # pdb.set_trace()
     dataiter = iter(dataloader)
     for iteration in range(start_iter, end_iter):
         start_time = time.time()
