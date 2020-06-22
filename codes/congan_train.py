@@ -16,6 +16,7 @@ import pdb
 import gpustat
 
 from models.conwgan import *
+from load_csv_torch import load_data_csv
 
 import torch
 import torchvision
@@ -35,7 +36,7 @@ IMAGE_DATA_SET = 'lsun' #change this to something else, e.g. 'imagenets' or 'raw
 #If you use lmdb, you'll need to write the loader by yourself, see load_data
 TRAINING_CLASS = ['dining_room_train', 'bridge_train', 'restaurant_train', 'tower_train'] 
 VAL_CLASS = ['dining_room_val', 'bridge_val', 'restaurant_val', 'tower_val'] 
-NUM_CLASSES = 4
+NUM_CLASSES = 65
 
 if len(DATA_DIR) == 0:
     raise Exception('Please specify path to data directory in gan_64x64.py!')
@@ -48,7 +49,7 @@ DIM = 64 # Model dimensionality
 CRITIC_ITERS = 5 # How many iterations to train the critic for
 GENER_ITERS = 1
 N_GPUS = 1 # Number of GPUs
-BATCH_SIZE = 64# Batch size. Must be a multiple of N_GPUS
+BATCH_SIZE = 65# Batch size. Must be a multiple of N_GPUS
 END_ITER = 100000 # How many iterations to train for
 LAMBDA = 10 # Gradient penalty lambda hyperparameter
 OUTPUT_DIM = 64*64*3 # Number of pixels in each iamge
@@ -151,8 +152,8 @@ if RESTORE_MODE:
     aG = torch.load(OUTPUT_PATH + "generator.pt")
     aD = torch.load(OUTPUT_PATH + "discriminator.pt")
 else:
-    aG = GoodGenerator(64,64*64*3)
-    aD = GoodDiscriminator(64, NUM_CLASSES)
+    aG = CSVGenerator(64,64*64*3)
+    aD = CSVDiscriminator(64, NUM_CLASSES)
     
     aG.apply(weights_init)
     aD.apply(weights_init)
@@ -174,7 +175,9 @@ writer = SummaryWriter()
 #Reference: https://github.com/caogang/wgan-gp/blob/master/gan_cifar10.py
 def train():
     #writer = SummaryWriter()
-    dataloader = load_data(DATA_DIR, TRAINING_CLASS)
+
+    # dataloader = load_data(DATA_DIR, TRAINING_CLASS)
+    dataloader = load_data_csv("../csv_data", batch_size=batch_size)[0]
     dataiter = iter(dataloader)
     for iteration in range(START_ITER, END_ITER):
         start_time = time.time()
