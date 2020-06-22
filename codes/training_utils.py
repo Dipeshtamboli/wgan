@@ -59,7 +59,7 @@ def load_data(image_data_type, path_to_folder, data_transform, batch_size, class
 
 def generate_image(netG, dim, batch_size, noise=None):
     if noise is None:
-        noise = gen_rand_noise()
+        noise = gen_rand_noise(1000)
 
     with torch.no_grad():
     	noisev = noise 
