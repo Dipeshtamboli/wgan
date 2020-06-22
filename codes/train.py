@@ -1,3 +1,4 @@
+from tqdm import tqdm
 import pdb
 import os, sys
 sys.path.append(os.getcwd())
@@ -43,7 +44,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 @click.option('--lr', default=1e-4, help='Learning rate')
 @click.option('--critic_iters', default=5, help='How many iterations to train the critic/disciminator for')
 @click.option('--gen_iters', default=1, help='How many iterations to train the gemerator for')
-@click.option('--batch_size', default=16, help='Training batch size. Must be a multiple of number of gpus')
+@click.option('--batch_size', default=64, help='Training batch size. Must be a multiple of number of gpus')
 @click.option('--noisy_label_prob', default=0., help='Make the labels the noisy for the discriminator: occasionally flip the labels when training the discriminator')
 @click.option('--start_iter', default=0, help='Starting iteration')
 @click.option('--end_iter', default=100000, help='Ending iteration')
@@ -88,9 +89,9 @@ def train(train_dir, validation_dir, image_data_type, output_path, dim, lr, crit
         aD = GoodDiscriminator(dim)
         # aG = torch.load(str(output_path / "generator.pt"))
         # aD = torch.load(str(output_path / "discriminator.pt"))
-        g_state_dict = torch.load(str(output_path / "generator.pt"))
+        g_state_dict = torch.load(str(output_path +'/'+ "generator.pt"))
         aG.load_state_dict(remove_module_str_in_state_dict(g_state_dict))
-        d_state_dict = torch.load(str(output_path / "discriminator.pt"))
+        d_state_dict = torch.load(str(output_path +'/' +"discriminator.pt"))
         aD.load_state_dict(remove_module_str_in_state_dict(d_state_dict))
     else:
         aG = CSVGenerator()
@@ -116,9 +117,9 @@ def train(train_dir, validation_dir, image_data_type, output_path, dim, lr, crit
     dataloader = dataloader[0]
     # pdb.set_trace()
     dataiter = iter(dataloader)
-    for iteration in range(start_iter, end_iter):
+    for iteration in tqdm(range(start_iter, end_iter)):
         start_time = time.time()
-        print("Iter: " + str(iteration))
+        # print("Iter: " + str(iteration))
         start = timer()
         #---------------------TRAIN G------------------------
         for p in aD.parameters():
@@ -126,7 +127,7 @@ def train(train_dir, validation_dir, image_data_type, output_path, dim, lr, crit
 
         gen_cost = None
         for i in range(gen_iters):
-            print("Generator iters: " + str(i))
+            # print("Generator iters: " + str(i))
             aG.zero_grad()
             noise = gen_rand_noise(batch_size).to(device)
             noise.requires_grad_(True)
@@ -141,12 +142,12 @@ def train(train_dir, validation_dir, image_data_type, output_path, dim, lr, crit
         
         optimizer_g.step()
         end = timer()
-        print(f'---train G elapsed time: {end - start}')
+        # print(f'---train G elapsed time: {end - start}')
         #---------------------TRAIN D------------------------
         for p in aD.parameters():  # reset requires_grad
             p.requires_grad_(True)  # they are set to False below in training G
         for i in range(critic_iters):
-            print("Critic iter: " + str(i))
+            # print("Critic iter: " + str(i))
             
             start = timer()
             aD.zero_grad()
@@ -158,7 +159,8 @@ def train(train_dir, validation_dir, image_data_type, output_path, dim, lr, crit
             fake_data = aG(noisev).detach()
             # fake_data = fake_data.view(batch_size, 3, dim, dim)
             # fake_data += torch.normal(0, 0.1, (batch_size, 3, dim, dim)).to(device)
-            end = timer(); print(f'---gen G elapsed time: {end-start}')
+            end = timer();
+            # print(f'---gen G elapsed time: {end-start}')
             start = timer()
             batch = next(dataiter, None)
             if batch is None:
@@ -167,7 +169,7 @@ def train(train_dir, validation_dir, image_data_type, output_path, dim, lr, crit
             # pdb.set_trace()
             batch = batch[0].type(torch.FloatTensor) #batch[1] contains labels
             real_data = batch.to(device) #TODO: modify load_data for each loading
-            end = timer(); print(f'---load real imgs elapsed time: {end-start}')
+            # end = timer(); print(f'---load real imgs elapsed time: {end-start}')
             start = timer()
 
             is_flipping = False
@@ -208,7 +210,8 @@ def train(train_dir, validation_dir, image_data_type, output_path, dim, lr, crit
                 #writer.add_scalar('data/disc_real', disc_real, iteration)
                 writer.add_scalar('data/gradient_pen', gradient_penalty, iteration)
 
-            end = timer(); print(f'---train D elapsed time: {end-start}')
+            end = timer(); 
+            # print(f'---train D elapsed time: {end-start}')
         #---------------VISUALIZATION---------------------
         writer.add_scalar('data/gen_cost', gen_cost, iteration)
 
@@ -233,17 +236,18 @@ def train(train_dir, validation_dir, image_data_type, output_path, dim, lr, crit
                 dev_disc_costs.append(_dev_disc_cost)
             lib.plot.plot(str(output_path +'/'+ 'dev_disc_cost.png'), np.mean(dev_disc_costs))
             lib.plot.flush()	
-            pdb.set_trace()
+            # pdb.set_trace()
+
             gen_images = generate_image(aG, dim=dim, batch_size=batch_size, noise=fixed_noise)
-            pdb.set_trace()
+            # pdb.set_trace()
             # torchvision.utils.save_image(gen_images, str(sample_path / 'samples_{}.png').format(iteration), nrow=8, padding=2)
             # grid_images = torchvision.utils.make_grid(gen_images, nrow=8, padding=2)
             # writer.add_image('images', grid_images, iteration)
 	#----------------------Save model----------------------
             # torch.save(aG, str(output_path / "generator.pt"))
             # torch.save(aD, str(output_path / "discriminator.pt"))
-            torch.save(aG.state_dict(), str(output_path / "generator.pt"))
-            torch.save(aD.state_dict(), str(output_path / "discriminator.pt"))
+            torch.save(aG.state_dict(), str(output_path +'/' +"generator.pt"))
+            torch.save(aD.state_dict(), str(output_path +'/' +"discriminator.pt"))
         lib.plot.tick()
 
 if __name__ == '__main__':
