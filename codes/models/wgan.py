@@ -237,7 +237,7 @@ class CSVDiscriminator(nn.Module):
 
         self.ln0 = nn.Linear(2048, 1024)
         self.ln1 = nn.Linear(1024, 1)
-        
+
         self.bn  = nn.BatchNorm1d(1024)
         self.relu = nn.ReLU()
         # self.ssize = self.dim // 16
@@ -267,10 +267,12 @@ if __name__ == '__main__':
     aG = CSVGenerator(dim, dim*dim*3)
     batch_size = 2
     noise = torch.randn(batch_size, 128)
-    out = aG(noise)
+    G_out = aG(noise)
 
+    print(f"G_out shape: {G_out.shape}")
     noise2 = torch.randn(batch_size,3,64,64)
     # pdb.set_trace()
     aD = CSVDiscriminator(dim)
-    D_out = aD(out)
-    pdb.set_trace()
+    D_out = aD(G_out)
+    print(f"D_out shape: {D_out.shape}")
+    # pdb.set_trace()
