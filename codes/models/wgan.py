@@ -1,3 +1,4 @@
+import pdb
 from torch import nn
 from torch.autograd import grad
 import torch
@@ -188,3 +189,81 @@ class GoodDiscriminator(nn.Module):
         output = self.ln1(output)
         output = output.view(-1)
         return output
+
+class CSVGenerator(nn.Module):
+    def __init__(self, dim=64, output_dim=3*64*64):
+        super(CSVGenerator, self).__init__()
+
+        self.dim = dim
+
+        self.ssize = self.dim // 16
+        self.ln1 = nn.Linear(128, 1024)
+        self.ln2 = nn.Linear(1024, 2048)
+        # self.rb1 = ResidualBlock(8*self.dim, 8*self.dim, 3, resample = 'up')
+        # self.rb2 = ResidualBlock(8*self.dim, 4*self.dim, 3, resample = 'up')
+        # self.rb3 = ResidualBlock(4*self.dim, 2*self.dim, 3, resample = 'up')
+        # self.rb4 = ResidualBlock(2*self.dim, 1*self.dim, 3, resample = 'up')
+        # self.bn  = nn.BatchNorm2d(self.dim)
+        self.bn  = nn.BatchNorm1d(1024)
+
+        # self.conv1 = MyConvo2d(1*self.dim, 3, 3)
+        self.relu = nn.ReLU()
+        self.tanh = nn.Tanh()
+
+    def forward(self, input):
+        output = self.ln1(input.contiguous())
+        # output = output.view(-1, 8*self.dim, self.ssize, self.ssize)
+        output = self.relu(output)
+        output = self.bn(output)
+        output = self.ln2(output)
+        output = self.tanh(output)
+
+        # output = self.rb1(output)
+        # output = self.rb2(output)
+        # output = self.rb3(output)
+        # output = self.rb4(output)
+
+        # output = self.relu(output)
+        # output = self.conv1(output)
+        # output = self.tanh(output)
+        # output = output.view(-1, 3 * self.dim * self.dim)
+        return output
+
+class CSVDiscriminator(nn.Module):
+    def __init__(self, dim=64):
+        super(CSVDiscriminator, self).__init__()
+
+        self.dim = dim
+
+        self.ssize = self.dim // 16
+        self.conv1 = MyConvo2d(3, self.dim, 3, he_init = False)
+        self.rb1 = ResidualBlock(self.dim, 2*self.dim, 3, resample = 'down', hw=self.dim)
+        self.rb2 = ResidualBlock(2*self.dim, 4*self.dim, 3, resample = 'down', hw=int(self.dim/2))
+        self.rb3 = ResidualBlock(4*self.dim, 8*self.dim, 3, resample = 'down', hw=int(self.dim/4))
+        self.rb4 = ResidualBlock(8*self.dim, 8*self.dim, 3, resample = 'down', hw=int(self.dim/8))
+        self.ln1 = nn.Linear(self.ssize*self.ssize*8*self.dim, 1)
+
+    def forward(self, input):
+        output = input.contiguous()
+        output = output.view(-1, 3, self.dim, self.dim)
+        output = self.conv1(output)
+        output = self.rb1(output)
+        output = self.rb2(output)
+        output = self.rb3(output)
+        output = self.rb4(output)
+        output = output.view(-1, self.ssize*self.ssize*8*self.dim)
+        output = self.ln1(output)
+        output = output.view(-1)
+        return output
+if __name__ == '__main__':
+    dim = 64
+    aG = CSVGenerator(dim, dim*dim*3)
+    batch_size = 2
+    noise = torch.randn(batch_size, 128)
+    out = aG(noise)
+
+    noise2 = torch.randn(batch_size,3,64,64)
+    pdb.set_trace()
+    aD = CSVDiscriminator(dim)
+    D_out = aD(out)
+    pdb.set_trace()
