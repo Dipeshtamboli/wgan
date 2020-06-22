@@ -63,7 +63,7 @@ def generate_image(netG, dim, batch_size, noise=None):
     with torch.no_grad():
     	noisev = noise 
     samples = netG(noisev)
-    samples = samples.view(batch_size, 3, dim, dim)
+    # samples = samples.view(batch_size, 3, dim, dim)
     samples = samples * 0.5 + 0.5
     return samples
 
