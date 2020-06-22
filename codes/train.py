@@ -28,7 +28,8 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 from timeit import default_timer as timer
 
-
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 # Some public testing data
 # lsun lmdb data set can be download via https://github.com/fyu/lsun
 # ImageNet (64x64) at http://image-net.org/small/download.php
@@ -129,13 +130,12 @@ def train(train_dir, validation_dir, image_data_type, output_path, dim, lr, crit
             aG.zero_grad()
             noise = gen_rand_noise(batch_size).to(device)
             noise.requires_grad_(True)
+            # fake_data = aG(noise).unsqueeze(0)
             fake_data = aG(noise)
             # fake_data = fake_data.view(batch_size, 3, dim, dim)
             # fake_data += torch.normal(0, 0.1, (batch_size, 3, dim, dim)).to(device)
             gen_cost = aD(fake_data)
-            pdb.set_trace()
-            gen_cost = gen_cost.mean()
-
+            gen_cost = gen_cost.mean().unsqueeze(0)
             gen_cost.backward(mone)
             gen_cost = -gen_cost
         
@@ -164,7 +164,8 @@ def train(train_dir, validation_dir, image_data_type, output_path, dim, lr, crit
             if batch is None:
                 dataiter = iter(dataloader)
                 batch = dataiter.next()
-            batch = batch[0] #batch[1] contains labels
+            # pdb.set_trace()
+            batch = batch[0].type(torch.FloatTensor) #batch[1] contains labels
             real_data = batch.to(device) #TODO: modify load_data for each loading
             end = timer(); print(f'---load real imgs elapsed time: {end-start}')
             start = timer()

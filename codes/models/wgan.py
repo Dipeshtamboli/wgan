@@ -248,6 +248,7 @@ class CSVDiscriminator(nn.Module):
         # self.rb4 = ResidualBlock(8*self.dim, 8*self.dim, 3, resample = 'down', hw=int(self.dim/8))
 
     def forward(self, input):
+        # pdb.set_trace()
         output = input.contiguous()
         # output = output.view(-1, 3, self.dim, self.dim)
         # output = self.conv1(output)
@@ -257,7 +258,10 @@ class CSVDiscriminator(nn.Module):
         # output = self.rb4(output)
         output = self.ln0(output)
         output = self.relu(output)
+        # print(f"before bn output: {output.shape}")
+        # pdb.set_trace()
         output = self.bn(output)
+        # print(f"bn output: {output.shape}")
         # output = output.view(-1, self.ssize*self.ssize*8*self.dim)
         output = self.ln1(output)
         output = output.view(-1)
