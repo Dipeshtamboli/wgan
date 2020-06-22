@@ -1,3 +1,4 @@
+import pdb
 from pathlib import Path
 from collections import OrderedDict
 
@@ -74,11 +75,17 @@ def gen_rand_noise(batch_size, ):
 
 def calc_gradient_penalty(netD, real_data, fake_data, batch_size, dim, device, gp_lambda):
     alpha = torch.rand(batch_size, 1)
-    alpha = alpha.expand(batch_size, int(real_data.nelement()/batch_size)).contiguous()
-    alpha = alpha.view(batch_size, 3, dim, dim)
+    # alpha = alpha.expand(batch_size, int(real_data.nelement()/batch_size)).contiguous()
+    alpha = alpha.expand(batch_size, 2048).contiguous()
+    # alpha = alpha.view(batch_size, 3, dim, dim)
     alpha = alpha.to(device)
     
-    fake_data = fake_data.view(batch_size, 3, dim, dim)
+    # fake_data = fake_data.view(batch_size, 3, dim, dim)
+
+    # pdb.set_trace()
+    fake_data = fake_data[:real_data.shape[0]]
+    alpha = alpha[:real_data.shape[0]]
+    # print(f"shapes:\nalpha: {alpha.shape}\nreal_data: {real_data.shape}\nfake_data: {fake_data.shape}")
     interpolates = alpha * real_data.detach() + ((1 - alpha) * fake_data.detach())
 
     interpolates = interpolates.to(device)

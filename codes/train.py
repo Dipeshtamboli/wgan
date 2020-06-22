@@ -38,7 +38,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 @click.option('--train_dir', default=None, help='Data path for training')
 @click.option('--validation_dir', default=None, help='Data path for valication')
 @click.option('--image_data_type', default="image_folder", type=click.Choice(["lsun", "image_folder"]), help='If you are using lsun images from lsun lmdb, use lsun. If you use your own data in a folder, then use "image_folder". If you use lmdb, you\'ll need to write the loader by yourself. Please check load_data function')
-@click.option('--output_path', default=None, help='Output path where result (.e.g drawing images, cost, chart) will be stored')
+@click.option('--output_path', default="out", help='Output path where result (.e.g drawing images, cost, chart) will be stored')
 @click.option('--dim', default=64, help='Model dimensionality or image resolution, tested with 64.')
 @click.option('--lr', default=1e-4, help='Learning rate')
 @click.option('--critic_iters', default=5, help='How many iterations to train the critic/disciminator for')
@@ -212,15 +212,18 @@ def train(train_dir, validation_dir, image_data_type, output_path, dim, lr, crit
         #---------------VISUALIZATION---------------------
         writer.add_scalar('data/gen_cost', gen_cost, iteration)
 
-        lib.plot.plot(str(output_path / 'time'), time.time() - start_time)
-        lib.plot.plot(str(output_path / 'train_disc_cost'), disc_cost.cpu().data.numpy())
-        lib.plot.plot(str(output_path / 'train_gen_cost'), gen_cost.cpu().data.numpy())
-        lib.plot.plot(str(output_path / 'wasserstein_distance'), w_dist.cpu().data.numpy())
+        lib.plot.plot(str(output_path +'/'+ 'time'), time.time() - start_time)
+        lib.plot.plot(str(output_path +'/'+ 'train_disc_cost'), disc_cost.cpu().data.numpy())
+        lib.plot.plot(str(output_path +'/'+ 'train_gen_cost'), gen_cost.cpu().data.numpy())
+        lib.plot.plot(str(output_path +'/'+ 'wasserstein_distance'), w_dist.cpu().data.numpy())
         if iteration > 0 and iteration % saving_step == 0:
-            val_loader = load_data(image_data_type, validation_dir, data_transform, batch_size=batch_size, classes=val_class, num_workers=num_workers)
+
+            # val_loader = load_data(image_data_type, validation_dir, data_transform, batch_size=batch_size, classes=val_class, num_workers=num_workers)
+            val_loader = load_data_csv("../csv_data", batch_size=batch_size)[0]
             dev_disc_costs = []
             for _, images in enumerate(val_loader):
-                imgs = torch.Tensor(images[0])
+                # pdb.set_trace()
+                imgs = torch.Tensor(images[0].type(torch.FloatTensor))
                	imgs = imgs.to(device)
                 with torch.no_grad():
             	    imgs_v = imgs
@@ -228,12 +231,14 @@ def train(train_dir, validation_dir, image_data_type, output_path, dim, lr, crit
                 D = aD(imgs_v)
                 _dev_disc_cost = -D.mean().cpu().data.numpy()
                 dev_disc_costs.append(_dev_disc_cost)
-            lib.plot.plot(str(output_path / 'dev_disc_cost.png'), np.mean(dev_disc_costs))
+            lib.plot.plot(str(output_path +'/'+ 'dev_disc_cost.png'), np.mean(dev_disc_costs))
             lib.plot.flush()	
+            pdb.set_trace()
             gen_images = generate_image(aG, dim=dim, batch_size=batch_size, noise=fixed_noise)
-            torchvision.utils.save_image(gen_images, str(sample_path / 'samples_{}.png').format(iteration), nrow=8, padding=2)
-            grid_images = torchvision.utils.make_grid(gen_images, nrow=8, padding=2)
-            writer.add_image('images', grid_images, iteration)
+            pdb.set_trace()
+            # torchvision.utils.save_image(gen_images, str(sample_path / 'samples_{}.png').format(iteration), nrow=8, padding=2)
+            # grid_images = torchvision.utils.make_grid(gen_images, nrow=8, padding=2)
+            # writer.add_image('images', grid_images, iteration)
 	#----------------------Save model----------------------
             # torch.save(aG, str(output_path / "generator.pt"))
             # torch.save(aD, str(output_path / "discriminator.pt"))
