@@ -133,7 +133,9 @@ def train(train_dir, validation_dir, image_data_type, output_path, dim, lr, crit
             # fake_data = fake_data.view(batch_size, 3, dim, dim)
             # fake_data += torch.normal(0, 0.1, (batch_size, 3, dim, dim)).to(device)
             gen_cost = aD(fake_data)
+            pdb.set_trace()
             gen_cost = gen_cost.mean()
+
             gen_cost.backward(mone)
             gen_cost = -gen_cost
         
