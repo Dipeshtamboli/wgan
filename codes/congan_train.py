@@ -1,3 +1,4 @@
+import pdb
 import os, sys
 sys.path.append(os.getcwd())
 
@@ -28,7 +29,7 @@ from torch.autograd import grad
 from timeit import default_timer as timer
 
 import torch.nn.init as init
-
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 DATA_DIR = '/datasets/lsun'
 VAL_DIR = '/datasets/lsun'
 
@@ -43,7 +44,7 @@ if len(DATA_DIR) == 0:
 
 RESTORE_MODE = False  # if True, it will load saved model from OUT_PATH and continue to train
 START_ITER = 0 # starting iteration 
-OUTPUT_PATH = '/path/to/output/' # output path where result (.e.g drawing images, cost, chart) will be stored
+OUTPUT_PATH = 'con_out/' # output path where result (.e.g drawing images, cost, chart) will be stored
 # MODE = 'wgan-gp'
 DIM = 64 # Model dimensionality
 CRITIC_ITERS = 5 # How many iterations to train the critic for
@@ -93,11 +94,17 @@ def load_data(path_to_folder, classes):
 
 def calc_gradient_penalty(netD, real_data, fake_data):
     alpha = torch.rand(BATCH_SIZE, 1)
-    alpha = alpha.expand(BATCH_SIZE, int(real_data.nelement()/BATCH_SIZE)).contiguous()
-    alpha = alpha.view(BATCH_SIZE, 3, DIM, DIM)
+    # alpha = alpha.expand(BATCH_SIZE, int(real_data.nelement()/BATCH_SIZE)).contiguous()
+    alpha = alpha.expand(BATCH_SIZE, 2048).contiguous()
+    # alpha = alpha.view(BATCH_SIZE, 3, DIM, DIM)
     alpha = alpha.to(device)
 
-    fake_data = fake_data.view(BATCH_SIZE, 3, DIM, DIM)
+    # fake_data = fake_data.view(BATCH_SIZE, 3, DIM, DIM)
+    alpha = alpha[:real_data.shape[0]]
+    fake_data = fake_data[:real_data.shape[0]]
+
+    # print(f"shapes:\nalpha: {alpha.shape}\nreal_data: {real_data.shape}\nfake_data: {fake_data.shape}")
+
     interpolates = alpha * real_data.detach() + ((1 - alpha) * fake_data.detach())
 
     interpolates = interpolates.to(device)
@@ -120,7 +127,7 @@ def generate_image(netG, noise=None):
     with torch.no_grad():
         noisev = noise
     samples = netG(noisev)
-    samples = samples.view(BATCH_SIZE, 3, DIM, DIM)
+    # samples = samples.view(BATCH_SIZE, 3, DIM, DIM)
 
     samples = samples * 0.5 + 0.5
 
@@ -152,9 +159,10 @@ if RESTORE_MODE:
     aG = torch.load(OUTPUT_PATH + "generator.pt")
     aD = torch.load(OUTPUT_PATH + "discriminator.pt")
 else:
-    aG = CSVGenerator(64,64*64*3)
-    aD = CSVDiscriminator(64, NUM_CLASSES)
-    
+    # aG = CSVGenerator(64,64*64*3)
+    # aD = CSVDiscriminator(64, NUM_CLASSES)
+    aG = CSVGenerator()
+    aD = CSVDiscriminator(NUM_CLASSES)
     aG.apply(weights_init)
     aD.apply(weights_init)
 
@@ -177,11 +185,11 @@ def train():
     #writer = SummaryWriter()
 
     # dataloader = load_data(DATA_DIR, TRAINING_CLASS)
-    dataloader = load_data_csv("../csv_data", batch_size=batch_size)[0]
+    dataloader = load_data_csv("../csv_data", batch_size=BATCH_SIZE)[0]
     dataiter = iter(dataloader)
     for iteration in range(START_ITER, END_ITER):
         start_time = time.time()
-        print("Iter: " + str(iteration))
+        # print("Iter: " + str(iteration))
         start = timer()
         #---------------------TRAIN G------------------------
         for p in aD.parameters():
@@ -189,7 +197,7 @@ def train():
 
         gen_cost = None
         for i in range(GENER_ITERS):
-            print("Generator iters: " + str(i))
+            # print("Generator iters: " + str(i))
             aG.zero_grad()
             f_label = np.random.randint(0, NUM_CLASSES, BATCH_SIZE)
             noise = gen_rand_noise_with_label(f_label)
@@ -206,12 +214,12 @@ def train():
         
         optimizer_g.step()
         end = timer()
-        print(f'---train G elapsed time: {end - start}')
+        # print(f'---train G elapsed time: {end - start}')
         #---------------------TRAIN D------------------------
         for p in aD.parameters():  # reset requires_grad
             p.requires_grad_(True)  # they are set to False below in training G
         for i in range(CRITIC_ITERS):
-            print("Critic iter: " + str(i))
+            # print("Critic iter: " + str(i))
             
             start = timer()
             aD.zero_grad()
@@ -222,7 +230,7 @@ def train():
             with torch.no_grad():
                 noisev = noise  # totally freeze G, training D
             fake_data = aG(noisev).detach()
-            end = timer(); print(f'---gen G elapsed time: {end-start}')
+            # end = timer(); print(f'---gen G elapsed time: {end-start}')
             start = timer()
             batch = next(dataiter, None)
             if batch is None:
@@ -232,14 +240,17 @@ def train():
             real_data.requires_grad_(True)
             real_label = batch[1]
             #print("r_label" + str(r_label))
-            end = timer(); print(f'---load real imgs elapsed time: {end-start}')
+            end = timer(); 
+            # print(f'---load real imgs elapsed time: {end-start}')
 
             start = timer()
-            real_data = real_data.to(device)
-            real_label = real_label.to(device)
+            real_data = real_data.type(torch.cuda.FloatTensor).to(device)
+            real_label = real_label.type(torch.cuda.LongTensor).to(device)
 
             # train with real data
+
             disc_real, aux_output = aD(real_data)
+            # pdb.set_trace()
             aux_errD_real = aux_criterion(aux_output, real_label)
             errD_real = aux_errD_real.mean()
             disc_real = disc_real.mean()
@@ -278,15 +289,16 @@ def train():
                 #    paramsD = aD.named_parameters()
                 #    for name, pD in paramsD:
                 #        writer.add_histogram("D." + name, pD.clone().data.cpu().numpy(), iteration)
-                if iteration %200==199:
-                    body_model = [i for i in aD.children()][0]
-                    layer1 = body_model.conv
-                    xyz = layer1.weight.data.clone()
-                    tensor = xyz.cpu()
-                    tensors = torchvision.utils.make_grid(tensor, nrow=8,padding=1)
-                    writer.add_image('D/conv1', tensors, iteration)
+                # if iteration %200==199:
+                #     body_model = [i for i in aD.children()][0]
+                #     layer1 = body_model.conv
+                #     xyz = layer1.weight.data.clone()
+                #     tensor = xyz.cpu()
+                #     tensors = torchvision.utils.make_grid(tensor, nrow=8,padding=1)
+                #     writer.add_image('D/conv1', tensors, iteration)
 
-            end = timer(); print(f'---train D elapsed time: {end-start}')
+            end = timer(); 
+            # print(f'---train D elapsed time: {end-start}')
         #---------------VISUALIZATION---------------------
         writer.add_scalar('data/gen_cost', gen_cost, iteration)
         #if iteration %200==199:
@@ -300,10 +312,12 @@ def train():
         lib.plot.plot(OUTPUT_PATH + 'train_gen_cost', gen_cost.cpu().data.numpy())
         lib.plot.plot(OUTPUT_PATH + 'wasserstein_distance', w_dist.cpu().data.numpy())
         if iteration % 200==199:
-            val_loader = load_data(VAL_DIR, VAL_CLASS)
+
+            # val_loader = load_data(VAL_DIR, VAL_CLASS)
+            val_loader = load_data_csv("../csv_data", batch_size=BATCH_SIZE)[0]
             dev_disc_costs = []
             for _, images in enumerate(val_loader):
-                imgs = torch.Tensor(images[0])
+                imgs = torch.Tensor(images[0].type(torch.FloatTensor))
                	imgs = imgs.to(device)
                 with torch.no_grad():
             	    imgs_v = imgs

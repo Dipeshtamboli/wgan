@@ -262,16 +262,19 @@ class CSVGenerator(nn.Module):
         return output
 
 class CSVDiscriminator(nn.Module):
-    def __init__(self):
+    def __init__(self, num_class=65):
         super(CSVDiscriminator, self).__init__()
 
         # self.dim = dim
-
+        self.num_class = num_class
         self.ln0 = nn.Linear(2048, 1024)
         self.ln1 = nn.Linear(1024, 1)
+        self.ln2 = nn.Linear(1024, self.num_class)        
 
         self.bn  = nn.BatchNorm1d(1024)
         self.relu = nn.ReLU()
+
+
         # self.ssize = self.dim // 16
         # self.conv1 = MyConvo2d(3, self.dim, 3, he_init = False)
         # self.rb1 = ResidualBlock(self.dim, 2*self.dim, 3, resample = 'down', hw=self.dim)
@@ -295,9 +298,13 @@ class CSVDiscriminator(nn.Module):
         output = self.bn(output)
         # print(f"bn output: {output.shape}")
         # output = output.view(-1, self.ssize*self.ssize*8*self.dim)
-        output = self.ln1(output)
-        output = output.view(-1)
-        return output
+        # output = self.ln1(output)
+        output_wgan = self.ln1(output)
+        output_wgan = output_wgan.view(-1)
+
+        output_congan = self.ln2(output)
+        return output_wgan, output_congan
+
 if __name__ == '__main__':
     dim = 64
     aG = CSVGenerator()
