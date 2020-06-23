@@ -1,3 +1,4 @@
+*.pt
 *.csv
 codes/runs/*
 csv_data/*
