@@ -59,4 +59,5 @@ lab = np.arange(0, NUM_CLASSES)
 lab = np.repeat(lab, 50, axis=0) # to generate 50 samples per class
 
 noise_sample, _ = gen_rand_noise_with_label(lab)
+image_vectors = generate_image(aG, noise_sample)
 pdb.set_trace()
