@@ -25,7 +25,7 @@ ACGAN_SCALE_G = 1. # How to scale generator's ACGAN loss relative to WGAN loss
 
 OUTPUT_PATH = 'con_out/'
 
-# aG = torch.load(OUTPUT_PATH + "generator.pt")
+aG = torch.load(OUTPUT_PATH + "generator.pt")
 
 def gen_rand_noise_with_label(label=None):
     if label is None:
@@ -59,5 +59,9 @@ lab = np.arange(0, NUM_CLASSES)
 lab = np.repeat(lab, 50, axis=0) # to generate 50 samples per class
 
 noise_sample, _ = gen_rand_noise_with_label(lab)
+lab = torch.from_numpy(lab).float().unsqueeze(1)
 image_vectors = generate_image(aG, noise_sample)
+final_file = torch.cat((image_vectors.detach().cpu(), lab),1)
+np.save("gen_vect_lab.npy", final_file)
 pdb.set_trace()
+
